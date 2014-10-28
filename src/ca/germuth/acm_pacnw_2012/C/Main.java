@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 /**
- * Magic Multiple Problem C
+ * Magic Multiple
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem C
  * 
  * This was a bit of tricky one. 
  * At the surface, you have 60 seconds to perform a simple a BFS through

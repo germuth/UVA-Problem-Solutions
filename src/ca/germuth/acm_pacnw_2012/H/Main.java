@@ -8,7 +8,9 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 /**
- * Seating Chart Problem H
+ * Seating Chart
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem H
  * 
  * If you know the algorithm for counting inverted pairs, you can solve this problem.
  * @author Germuth

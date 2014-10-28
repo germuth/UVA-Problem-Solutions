@@ -3,7 +3,9 @@ package ca.germuth.acm_pacnw_2012.G;
 import java.util.Scanner;
 
 /**
- * Saruman's Level Up Problem G
+ * Saruman's Level Up
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem G
  * 
  * Ex. 64. 64 in binary is 0100 0000. 
  * There are 6 binary digits of numbers to consider, and the number itself.

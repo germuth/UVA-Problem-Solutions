@@ -3,7 +3,9 @@ package ca.germuth.acm_pacnw_2012.B;
 import java.util.Scanner;
 
 /**
- * Magic Multiple Problem B
+ * Magic Multiple 
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem B
  * 
  * Use boolean array to keep track of which digits we have encountered.
  * No Special tricks here

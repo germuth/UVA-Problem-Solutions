@@ -3,6 +3,7 @@ package ca.germuth.acm_pacnw_2012.A;
 import java.util.Scanner;
 /**
  * Good Versus Evil
+ * ACM ICPC Pacific Northwest Regionals 2012
  * Problem A
  * 
  * Simple freebie question

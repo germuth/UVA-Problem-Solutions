@@ -6,7 +6,9 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 /**
- * Tile Cut Problem K
+ * Tile Cut
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem K
  * 
  * This problem was an application of maximum flow. You created a source
  * node and connected it to all 'W's, and sink node connected from all 'N's. 

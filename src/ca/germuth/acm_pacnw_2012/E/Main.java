@@ -5,7 +5,9 @@ package ca.germuth.acm_pacnw_2012.E;
 import java.util.ArrayList;
 import java.util.Scanner;
 /**
- * Magic Multiple Problem E
+ * Magic Multiple 
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem E
  * 
  * This problem is the hidden 3-sat NP problem. Since number of rings
  * limited to 22, only ever 2^22 possible rings to try. This means we

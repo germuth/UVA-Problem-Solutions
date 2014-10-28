@@ -1,59 +1,124 @@
 package ca.germuth.acm_pacnw_2013.test;
 
-//Binary search on all-pairs shortest paths.
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
 
-public class Main {
+/**
+ * Solution to Count your Cousins
+ * 
+ * @author vanb
+ */
+class Main
+{
+    public Scanner sc;
+    public PrintStream ps;
+    
+    /**
+     * A Node of the tree.
+     * records the level, the number of kids, and a link to the parent node.
+     * 
+     * @author vanb
+     */
+    public class Node
+    {
+        public int kids, grandkids;
+        public Node parent;
+       
+        /**
+         * Create a Node, specifying its parent.
+         * @param parent The Parent of this Node
+         */
+        public Node( Node parent )
+        {            
+            // We don't know about any kids yet.
+            kids = grandkids = 0;
+            
+            // This is pretty self-explanatory.
+            this.parent = parent;
+        }
+    }
+        
+    /**
+     * Driver.
+     * @throws Exception
+     */
+    public void doit() throws Exception
+    {
+        sc = new Scanner( System.in ); //new File( "cousins.judge" ) );
+        ps = System.out; //new PrintStream( new FileOutputStream( "cousins.solution" ) );
+        
+        // We'll use this to match up node numbers with Node objects.
+        HashMap<Integer,Node> nodes = new HashMap<Integer,Node>();
+        
+        // We'll stick all of the nodes into an array, sequentially
+        Node tree[] = new Node[1000];
 
-	  // side effect: sort(arr, start, end)
-	  static long inversionCount(int[] arr, int start, int end) {
-	    if (end - start <= 1) return 0;
-	    
-	    long answer = 0;
-	    int mid = (start + end) / 2;
-	    answer += inversionCount(arr, start, mid) + inversionCount(arr, mid, end);
-	    
-	    int index1 = 0, index2 = 0;
-	    while (start + index1 < mid) {
-	      if (mid + index2 == end || arr[start + index1] < arr[mid + index2]) {
-	        index1++;
-	        answer += index2;
-	      } else {
-	        index2++;
-	      }
-	    }
-	    
-	    Arrays.sort(arr, start, end);
-	    
-	    return answer;
-	  }
-	  
-	  public static void main(String[] args) {
-//	    Scanner s = new Scanner(System.in);
-		  Scanner s = null;
-		  try {
-			s = new Scanner(new File("test.txt"));
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    while (true) {
-	      int n = s.nextInt();
-	      if (n == 0) break;
-	      
-	      HashMap<String, Integer> map = new HashMap<String, Integer>();
-	      for (int i = 0; i < n; i++) map.put(s.next(), i);
-	      
-	      int[] arr = new int[n];
-	      for (int i = 0; i < n; i++) arr[i] = map.get(s.next());
-	      
-	      System.out.println(inversionCount(arr, 0, n));
-	    }
-	  }
-	
+        for(;;)
+        {
+            int n = sc.nextInt();
+            int k = sc.nextInt();
+            if( n==0 ) break;
+            
+            // Start with a fresh tree
+            Arrays.fill( tree, null );
+            
+            // The first one is the root.
+            int root = sc.nextInt();
+            tree[0] = new Node(null);
+            nodes.clear();
+            nodes.put( root, tree[0] );
+            
+            // The root is the first parent. We'll also need to know the previous node number.
+            int parent = -1;
+            int previous = -1;
+            for( int i=1; i<n; i++ )
+            {
+                // Get the next node number. If it's not sequential (i.e. one more than the previous),
+                // then we've moved on to the next node as a parent.
+                int nodenum = sc.nextInt();
+                if( nodenum>previous+1 ) ++parent;
+                
+                // Create the node, map its node number to it
+                tree[i] = new Node( tree[parent] );
+                nodes.put( nodenum, tree[i] );
+                
+                // The parent now has one more kid
+                tree[parent].kids++;
 
+                // And the grandparent has one more grandkid
+                if( tree[parent].parent!=null ) tree[parent].parent.grandkids++;
+                               
+                // This is now the previous node number
+                previous = nodenum;
+            }
+            
+            // Find the target node
+            Node node = nodes.get( k );
+            
+            // if it isn't there, the judge data is bad!!
+            if( node==null )
+            {
+                System.err.println( "PANIC!! Node " + k + " isn't in the tree! " + nodes );
+            }
+            else if( node.parent==null || node.parent.parent==null )
+            {
+                // Parent is null? Grandparent is null?
+                // Then this is the root, or a child of the root, so it has no cousins.
+                ps.println(0);
+            }
+            else 
+            {
+                // The number of cousins is the number of nodes which share a grandparent, but not a parent.
+                ps.println( node.parent.parent.grandkids - node.parent.kids );
+            }
+        }
+    }
+    
+    /**
+     * @param args
+     */
+    public static void main( String[] args ) throws Exception
+    {
+        new Main().doit();        
+    }   
 }

@@ -2,7 +2,9 @@ package ca.germuth.acm_pacnw_2012.L;
 
 import java.util.Scanner;
 /**
- * Magic Multiple Problem L
+ * Magic Multiple
+ * ACM ICPC Pacific Northwest Regionals 2012
+ * Problem L
  * 
  * Simple character substitution.
  * @author Germuth
