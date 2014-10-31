@@ -8,22 +8,27 @@ import java.util.Scanner;
 
 /**
  * Electric Car Rally
- * ACM ICPC SouthEast USA Regionals 2013
+ * ACM ICPC SouthEast USA Regionals 2013 
  * Problem D Division 2
  * 
- * NOT YET ACCEPTED, BUT SHOULD BE CLOSE
- * This problem boils down to a really complex single source-single destination shortest path.
- * So it can be solved with simple BFS. 
- * After running through the test examples, you can see that there are some cases
- * where getting to a node slower, but with more battery is advantageous. Therefore at each node,
- * you consider traversing all edges, and if you got somewhere faster, or with more battery than you remember
- * that state, and will build off of it later. Additionally, if your charging time is an odd number and you leave,
- * you have wasted that last minute charging since you only increase battery every 2 minutes. Therefore in these 
- * cases, you must also consider the possibility that you waited the extra minute as well.
+ * This problem boils down to a really complex single source-single destination
+ * shortest path. So it can be solved with simple BFS. After running through the
+ * test examples, you can see that there are some cases where getting to a node
+ * slower, but with more battery is advantageous. Therefore at each node, you
+ * consider traversing all edges, and if you got somewhere faster, or with more
+ * battery than you consider that state. There is a limit on how far behind in
+ * time you can be to have the extra battery possibly make up for it, and this
+ * is where timeBehind <= extraBattery*2 For cases where this isn't true, you
+ * could simply get there in the quickest amount of time, and then charge you
+ * battery to the higher value in a quicker time than the new one you are
+ * considering. Additionally, if your charging time is an odd number and you
+ * leave, you have wasted that last minute charging since you only increase
+ * battery every 2 minutes. Therefore in these cases, you must also consider the
+ * possibility that you waited the extra minute as well.
  * 
  * @author Aaron
  */
-public class Main {
+class Main {
 	static HashMap<Integer, ArrayList<Edge>> edges;
 
 	public static void main(String[] args) {
@@ -56,145 +61,126 @@ public class Main {
 						graph[to].edges
 								.add(new Edge(to, from, start, end, dis));
 					}
-
 					if (end == 1439) {
 						break;
 					}
 				}
 			}
-
-			// input has been taken in
-			// find shortest path from 0 to n-1
+			// want trip duration, not total time
 			System.out.println(shortestPath(graph, 0, n - 1) - 720);
 		}
-
 		s.close();
 	}
 
 	public static int shortestPath(Node[] graph, int start, int end) {
-		ArrayList<State> trials = new ArrayList<State>();
 		ArrayList<Integer> chargeTimes = new ArrayList<Integer>();
-		
+
 		State[] minDistance = new State[graph.length];
-		State[] maxBattery = new State[graph.length];
-	
-		Arrays.fill(minDistance, new State(Integer.MAX_VALUE, 0));
-		Arrays.fill(maxBattery, new State(Integer.MAX_VALUE, 0));
+		Arrays.fill(minDistance, new State(0, Integer.MAX_VALUE, 0));
+		minDistance[start] = new State(0, 720, 240); // noon
 
-		minDistance[start] = new State(720, 240); // noon
-		maxBattery[start] = new State(720, 240);
-
-		LinkedList<Integer> openList = new LinkedList<Integer>();
-		openList.add(start);
+		LinkedList<State> openList = new LinkedList<State>();
+		openList.add(new State(0, 720, 240));
 
 		while (!openList.isEmpty()) {
-			int node = openList.pop();
+			State curr = openList.pop();
 
-			if (node == end) {
+			if (curr.node == end) {
 				continue;
 			}
 
-			//must be done twice, once for solution with best time, one with best battery
-			//unless they are the same
-			trials.clear();
-			
-			if(minDistance[node].equals(maxBattery[node])){
-				trials.add(minDistance[node]);
-			}else{
-				if(minDistance[node].time != Integer.MAX_VALUE){
-					trials.add(minDistance[node]);					
-				}
-				if(maxBattery[node].time != Integer.MAX_VALUE){
-					trials.add(maxBattery[node]);					
-				}
-			}
-			
-			for(int b = 0; b < trials.size(); b++){
-				int currentTime = trials.get(b).time;
-				int currentBatt = trials.get(b).battery;
+			int node = curr.node;
+			int currentTime = curr.time;
+			int currentBatt = curr.battery;
 
-				// this could be made faster by calculating these values for each
-				// edge first,
-				// and then only adding the fastest one
-				for (int i = 0; i < graph[node].edges.size(); i++) {
-					Edge e = graph[node].edges.get(i);
+			for (int i = 0; i < graph[node].edges.size(); i++) {
+				Edge e = graph[node].edges.get(i);
 
-					// determine charge time
-					// how much we need to charge to traverse this edge, and get
-					// there with 0
-					int chargeTime = Math.max(0, e.distance - currentBatt) * 2;
-					
+				// how much we need to charge to traverse this edge, and get
+				// there with 0
+				int chargeTime = Math.max(0, e.distance - currentBatt) * 2;
 
-					//this may be done twice
-					//if charge time is odd, then we wasted last minute trying to get higher battery
-					//since battery increases only every 2nd minute
-					//in some cases, it may be worth it to delay moving down edge, and charge extra
-					//minute to get that higher batter
-					//the first iteration is normal case
-					//second iteration is only done if 1st iteration chargeTime was odd
-					for(int ch = 0; ch < 2; ch++){
-						
-						//if 2nd iteration
-						if (ch == 1) {
-							if (chargeTime % 2 == 0) {
-								continue;
-							} else {
-								// try waiting one extra minute
-								chargeTime++;
-							}
-						}
-						
-						int timeAfterCharging = currentTime + chargeTime;
-						
-						//adjust time to within 0 - 1439
-						//and test when we can next take this edge
-						int adjustedTime = timeAfterCharging;
-						while (adjustedTime >= 1440) {
-							adjustedTime -= 1440;
-						}
-						
-						// determine wait time
-						int waitTime = 0;
-						if (e.endTime < adjustedTime) {
-							// must wait until edge is open tomorrow
-							waitTime = 1440 - (adjustedTime - e.startTime);
+				// if charge time is odd, then we wasted last minute trying to
+				// get higher battery
+				// since battery increases only every 2nd minute
+				// in some cases, it may be worth it to delay moving down edge
+				// and charge extra minute
+				// second iteration is only done if 1st iteration chargeTime was
+				// odd, to test for this case
+				for (int ch = 0; ch < 2; ch++) {
+					// if 2nd iteration
+					if (ch == 1) {
+						if (chargeTime % 2 == 0) {
+							continue;
 						} else {
-							// edge can be done today
-							waitTime = Math.max(0, e.startTime - adjustedTime);
-						}
-						
-						int timeAfterChargeAndWait = timeAfterCharging + waitTime;
-
-						// might as well charge extra, as long as we are waiting
-						chargeTime += waitTime;
-						
-						// determine new battery charge
-						int newBatteryCharge = currentBatt + chargeTime / 2;
-						if (newBatteryCharge > 240) {
-							newBatteryCharge = 240;
-						}
-						
-						//traverse the edge
-						newBatteryCharge -= e.distance;
-
-						int totalTime = timeAfterChargeAndWait + e.distance;
-						// if we got there faster
-						if(totalTime < minDistance[e.to].time){
-							minDistance[e.to] = new State(totalTime, newBatteryCharge);
-							openList.add(e.to);
-						}
-						//or with more battery
-						else if (maxBattery[e.to].battery < newBatteryCharge) {
-							maxBattery[e.to] = new State(totalTime, newBatteryCharge);
-							openList.add(e.to);
+							// try waiting one extra minute
+							chargeTime++;
 						}
 					}
-					chargeTimes.clear();
+
+					int timeAfterCharging = currentTime + chargeTime;
+
+					// adjust time to within 0 - 1439
+					int adjustedTime = timeAfterCharging;
+					while (adjustedTime >= 1440) {
+						adjustedTime -= 1440;
+					}
+
+					// determine wait time
+					int waitTime = 0;
+					if (e.endTime < adjustedTime) {
+						// must wait until edge is open tomorrow
+						waitTime = 1440 - (adjustedTime - e.startTime);
+					} else {
+						// edge can be done today
+						waitTime = Math.max(0, e.startTime - adjustedTime);
+					}
+
+					int timeAfterChargeAndWait = timeAfterCharging + waitTime;
+
+					// might as well charge extra, as long as we are waiting
+					chargeTime += waitTime;
+
+					// determine new battery charge
+					int newBatteryCharge = currentBatt + chargeTime / 2;
+					if (newBatteryCharge > 240) {
+						newBatteryCharge = 240;
+					}
+
+					// traverse the edge
+					newBatteryCharge -= e.distance;
+
+					int totalTime = timeAfterChargeAndWait + e.distance;
+
+					State next = new State(e.to, totalTime, newBatteryCharge);
+					State fastest = minDistance[e.to];
+					// if we got there faster than previously
+					if (totalTime < fastest.time) {
+						minDistance[e.to] = next;
+						openList.add(next);
+					} else {
+						// how far behind are we
+						int timeBehind = totalTime - fastest.time;
+						// how much more battery do we have
+						int batteryAhead = newBatteryCharge - fastest.battery;
+
+						// if we have less battery and got there in more time,
+						// we are doing strictly worse
+						if (batteryAhead > 0) {
+							// if the current fastest solution, could charge its
+							// battery to our current level before the current
+							// time
+							// then it is also strictly worse
+							if (timeBehind <= batteryAhead * 2) {
+								openList.add(next);
+							}
+						}
+					}
+
 				}
+				chargeTimes.clear();
 			}
-
 		}
-
 		return minDistance[end].time;
 	}
 }
@@ -223,22 +209,27 @@ class Edge {
 		endTime = e;
 		distance = d;
 	}
-} class State {
+}
+
+class State {
+	int node;
 	int battery;
 	int time;
-	public State(int t, int b){
+
+	public State(int n, int t, int b) {
+		this.node = n;
 		this.battery = b;
 		this.time = t;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
-		State o = (State)obj;
-		if(battery == o.battery){
-			if(time == o.time){
+		State o = (State) obj;
+		if (battery == o.battery) {
+			if (time == o.time) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
 }

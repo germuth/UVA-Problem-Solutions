@@ -1,182 +1,123 @@
 package ca.germuth.acm_pacnw_2013.B;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 /**
- * Bone's Battery Problem B
+ * Bone's Battery 
+ * ACM ICPC Pacific NorthWest 2013 Regionals
+ * Problem B
  * 
- * Below solution is not correct. 
+ * The first observation is that running all-pairs-shortest-paths
+ * solves the problem for k = 1. We can then run apsp once for each k. These apsp's
+ * will replace the shortest path from node i to node j with another path
+ * from node i to node k to node j if the 2nd path has a smaller maximum
+ * edge weight. This is repeated once for each k.
+ * You must make sure that the graph you are editing in the 2nd step, is 
+ * different from the graph you are reading from. If you use the same graph,
+ * it is possible you will try to use an updated path twice, causing some problems
+ *  
  * @author Germuth
  */
 class Main {
-	
-	//this number should be larger than any possible summed distance
-	//but not as large as Long.MAX or else it will overflow and ruin everything
-	final static long LARGE_NUMBER = 1000000000000000000L;
-	//contains shortest path from every node to every other node
-	static long[][] distTo;
-	//this array holds pathing information used to get shortest paths
-	static int[][] pathTo;
-	public static void main(String args[]) {
+	public static void main(String[] args) {
 		Scanner s = new Scanner(System.in);
 
-		int numCases = s.nextInt();
-		for(int a = 0; a < numCases; a++){
+		int cases = s.nextInt();
+
+		for (int a = 0; a < cases; a++) {
 			int n = s.nextInt();
-			int k = s.nextInt();
-			int m = s.nextInt();
-			
+			int K = s.nextInt();
+			int edges = s.nextInt();
+
 			long[][] graph = new long[n][n];
-			for(int j = 0; j < graph.length; j++){
-				Arrays.fill(graph[j], 0);
+			for (long[] sec : graph) {
+				Arrays.fill(sec, INFINITY);
 			}
-			for(int j = 0; j < m; j++){
-				int to = s.nextInt();
+			// distance to yourself is 0
+			for (int i = 0; i < n; i++) {
+				graph[i][i] = 0;
+			}
+			for (int i = 0; i < edges; i++) {
 				int from = s.nextInt();
-				long d = s.nextLong();
-				graph[to][from] = d;
-				graph[from][to] = d;
+				int to = s.nextInt();
+				long dis = s.nextInt();
+				graph[from][to] = dis;
+				graph[to][from] = dis;
 			}
-			
-			//find all shortest paths
-			allPairsShortestPathWithRememberPath(graph);
-			//iterate through each path and combine nodes until there are k nodes
-			//and then grab the smallest possible battery we could use
-			long smallestPossibleBattery = Long.MIN_VALUE;
-			for(int i = 0; i < graph.length; i++){
-				for(int j = 0; j < graph[i].length; j++){
-					if(i == j){
-						continue;
+
+			// running all pairs shortest paths, solves the problem for k = 1
+			// we simply would have to iterate over the graph and find largest
+			// edge
+			apsp(graph);
+
+			// perform this once for each k
+			// each time reducing one edge
+			for (int k = 1; k < K; k++) {
+				// graph for k is the one looked at
+				// graph is the one updated
+				// this way we can't use an updated edge twice in one run
+				long[][] graphForK = new long[n][n];
+				for (int i = 0; i < n; i++) {
+					for (int j = 0; j < n; j++) {
+						graphForK[i][j] = graph[i][j];
 					}
-					//path from i to j
-					ArrayList<Edge> path = reconstructPathWithEdge(i, j);
-					while(path.size() > k){
-						//combine ith and i+1th node in path
-						//find smallest two adjacent edges and join them
-						//reducing nodes in path 1 by 1 until can be in k rechargings
-						int firstOfSmallest = -1;
-						long smallest = Long.MAX_VALUE;
-						for(int b = 0; b < path.size() - 1; b++){
-							Edge curr = path.get(b);
-							Edge next = path.get(b + 1);
-							
-							if(curr.dis + next.dis < smallest){
-								smallest = curr.dis + next.dis;
-								firstOfSmallest = b;
+				}
+				for (int source = 0; source < n; source++) {
+					for (int dest = 0; dest < n; dest++) {
+						// for each source - destination pair
+						if (source == dest) {
+							continue;
+						}
+						// consider trying a new intermediate node
+						for (int intermediate = 0; intermediate < n; intermediate++) {
+							if (intermediate == source || intermediate == dest) {
+								continue;
+							}
+							// if the maximum edge weight in the new path is
+							// less than the maximum edge weight in the current
+							// path
+							// then replace it
+							long maxEdgeCurrent = graph[source][dest];
+							long maxEdgeNew = Math.max(
+									graphForK[source][intermediate],
+									graphForK[intermediate][dest]);
+							if (maxEdgeNew < maxEdgeCurrent) {
+								graph[source][dest] = maxEdgeNew;
 							}
 						}
-						//found smallest, now join them
-						Edge fir = path.get(firstOfSmallest);
-						Edge sec = path.get(firstOfSmallest + 1);
-						fir.dis += sec.dis;
-						fir.to = sec.to;
-						path.remove(firstOfSmallest + 1);
 					}
-					
-					//now iterate over path and find smallest
-					for(int b = 0; b < path.size(); b++){
-						if(path.get(b).dis > smallestPossibleBattery){
-							smallestPossibleBattery = path.get(b).dis;
-						}
-					}
-					
 				}
 			}
-			
-			System.out.println(smallestPossibleBattery);	
-		}
-			
-			
 
+			// search through graph for largest edge
+			long maxEdge = Long.MIN_VALUE;
+			for (int i = 0; i < n; i++) {
+				for (int j = 0; j < n; j++) {
+					if (graph[i][j] > maxEdge) {
+						maxEdge = graph[i][j];
+					}
+				}
+			}
+			System.out.println(maxEdge);
+
+		}
 		s.close();
 	}
-	
-	public static void allPairsShortestPath(long[][] graph){
-		int n = graph.length;
-		//contains shortestPaths
-		distTo = new long[n][n];
-		for(int i = 0; i < graph.length; i++){
-			for(int j = 0; j < graph[i].length; j++){
-				if(i == j){
-					distTo[i][j] = 0;
-				}else if(graph[i][j] > 0){
-					distTo[i][j] = graph[i][j];
-				}else{
-					distTo[i][j] = LARGE_NUMBER;
+
+	// this number has to be larger than any of the edges we will encounter
+	// but small enough that 2*INFINITY will not overflow
+	static long INFINITY = 2000000000000000000l;
+
+	public static void apsp(long[][] dist) {
+		int n = dist.length;
+		for (int k = 0; k < n; k++)
+			for (int i = 0; i < n; i++)
+				for (int j = 0; j < n; j++) {
+					long currPath = dist[i][j];
+					long newPath = dist[i][k] + dist[k][j];
+					if (newPath < currPath) {
+						dist[i][j] = newPath;
+					}
 				}
-			}
-		}
-		for (int k=0; k<n; k++)
-	         for (int i=0; i<n; i++)
-	            for (int j=0; j<n; j++)
-	               if (distTo[i][k] + distTo[k][j] < distTo[i][j])
-	                  distTo[i][j] = distTo[i][k] + distTo[k][j] ;
-	}
-	
-	public static void allPairsShortestPathWithRememberPath(long[][] graph){
-		int n = graph.length;
-		//contains shortestPaths
-		distTo = new long[n][n];
-		//contains paths
-		pathTo = new int[n][n];
-		for(int[] path: pathTo){
-			Arrays.fill(path, -1);
-		}
-		for(int i = 0; i < graph.length; i++){
-			for(int j = 0; j < graph[i].length; j++){
-				if(i == j){
-					distTo[i][j] = 0;
-				}else if(graph[i][j] > 0){
-					distTo[i][j] = graph[i][j];
-					pathTo[i][j] = j;
-				}else{
-					distTo[i][j] = LARGE_NUMBER;
-				}
-			}
-		}
-		for (int k=0; k<n; k++)
-	         for (int i=0; i<n; i++)
-	            for (int j=0; j<n; j++)
-	               if (distTo[i][k] + distTo[k][j] < distTo[i][j]){
-	                  distTo[i][j] = distTo[i][k] + distTo[k][j] ;
-	                  pathTo[i][j] = pathTo[i][k];
-	               }
-	}
-	
-	public static ArrayList<Integer> reconstructPath(int start, int end){
-		ArrayList<Integer> path = new ArrayList<Integer>();
-		if(pathTo[start][end] == -1){
-			return path;
-		}
-		path.add(start);
-		int current = start;
-		while(current != end){
-			current = pathTo[current][end];
-			path.add(current);
-		}
-		return path;
-	}
-	
-	public static ArrayList<Edge> reconstructPathWithEdge(int start, int end){
-		ArrayList<Integer> path = reconstructPath(start, end);
-		ArrayList<Edge> edges = new ArrayList<Edge>();
-		for(int i = 0; i < path.size() - 1; i++){
-			int curr = path.get(i);
-			int next = path.get(i + 1);
-			edges.add(new Edge(curr, next, distTo[curr][next]));
-		}
-		
-		return edges;
-	}
-	
-}class Edge{
-	long dis;
-	int from;
-	int to;
-	public Edge(int s, int e, long d){
-		this.from = s;
-		this.to = e;
-		this.dis = d;
 	}
 }

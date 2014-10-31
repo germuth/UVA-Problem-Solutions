@@ -1,175 +1,246 @@
 package ca.germuth.acm_pacnw_2013.test;
 
-package ca.germuth.uva_10245;
+package ca.germuth.acm_southeastusa_2013.div2.D;
 
-import java.awt.geom.Point2D;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.StringTokenizer;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Scanner;
 
-public class Main {
-	public static void main(String[] args) throws IOException {
-		BufferedReader buf = new BufferedReader(
-				new InputStreamReader(System.in));
+/**
+ * Electric Car Rally
+ * ACM ICPC SouthEast USA Regionals 2013
+ * Problem D Division 2
+ * 
+ * NOT YET ACCEPTED, BUT SHOULD BE CLOSE
+ * This problem boils down to a really complex single source-single destination shortest path.
+ * So it can be solved with simple BFS. 
+ * After running through the test examples, you can see that there are some cases
+ * where getting to a node slower, but with more battery is advantageous. Therefore at each node,
+ * you consider traversing all edges, and if you got somewhere faster, or with more battery than you remember
+ * that state, and will build off of it later. Additionally, if your charging time is an odd number and you leave,
+ * you have wasted that last minute charging since you only increase battery every 2 minutes. Therefore in these 
+ * cases, you must also consider the possibility that you waited the extra minute as well.
+ * 
+ * @author Aaron
+ */
+class Main {
+	static HashMap<Integer, ArrayList<Edge>> edges;
 
-		while (true) {
-			int n = Integer.parseInt(buf.readLine().trim());
+	public static void main(String[] args) {
+		Scanner s = new Scanner(System.in);
+
+		while (s.hasNext()) {
+			int n = s.nextInt();
+			int e = s.nextInt();
 			if (n == 0) {
 				break;
 			}
-
-			Point[] points = new Point[n];
-			
-			for (int i = 0; i < n; i++) {
-				StringTokenizer str = new StringTokenizer(buf.readLine());
-				points[i] = new Point(Double.parseDouble(str.nextToken()),
-						Double.parseDouble(str.nextToken()));
+			Node[] graph = new Node[n];
+			for (int i = 0; i < graph.length; i++) {
+				graph[i] = new Node(i, new ArrayList<Edge>());
 			}
 
-			double min = findClosestPair(points);
+			for (int i = 0; i < e; i++) {
+				int from = s.nextInt();
+				int to = s.nextInt();
 
-			if (min > 9999)
-				System.out.println("INFINITY");
-			else {
-				System.out.printf("%.4f", min);
-				System.out.println("");
-			}
-		}
-	}
+				while (true) {
+					int start = s.nextInt();
+					int end = s.nextInt();
+					int dis = s.nextInt();
 
-	static double MAX_DISTANCE = Double.MAX_VALUE;
-	// static Point[] PX;
-	// static Point[] PY;
-	static double shortestDist = MAX_DISTANCE;
-	static Point point1;
-	static Point point2;
+					Edge edge = new Edge(from, to, start, end, dis);
 
-	static double findClosestPair(Point[] points) {
-		Point[] PX = points;
-		Point[] PY = Arrays.copyOf(PX, PX.length);
+					if (dis <= 240) {
+						graph[from].edges.add(edge);
+						graph[to].edges
+								.add(new Edge(to, from, start, end, dis));
+					}
 
-		// sort by x
-		Arrays.sort(PX, new Comparator<Point>() {
-			@Override
-			public int compare(Point o1, Point o2) {
-				return Double.compare(o1.x, o2.x);
-			}
-		});
-
-		// sort by y
-		Arrays.sort(PY, new Comparator<Point>() {
-			@Override
-			public int compare(Point o1, Point o2) {
-				return Double.compare(o1.y, o2.y);
-			}
-		});
-
-		return Math.sqrt(closestPair(PX, PY));
-	}
-
-	static double closestPair(Point[] PX, Point[] PY) {
-		// two points
-		if (PX.length == 2) {
-			return getDist(PX[0], PX[1]);
-		}
-		// three points
-		if (PX.length == 3) {
-			return Math.min(getDist(PX[0], PX[1]),
-					Math.min(getDist(PX[0], PX[2]), getDist(PX[1], PX[2])));
-		}
-		// find middle point 
-		int mid = (PX.length - 1) / 2;
-		Point median = PX[mid];
-		
-		// four or more points, split them up
-		// need to form Lx, Ly (left half) and Rx, Ry (right half
-		Point[] LX = Arrays.copyOf(PX, mid);
-		Point[] LY;
-		
-		Point[] RX = Arrays.copyOfRange(PX, mid, PX.length);
-		Point[] RY;
-		
-		int l,r = 0;
-		for(int i = 0; i < PY.length; i++){
-			Point p = PY[i];
-			if(p.x <= median.x){
-				LY[l++] = p;
-			}else{
-				RY[r++] = p;
-			}
-		}
-		
-
-		// compute closest pair with both endpoints in left subarray or both in
-		// right subarray
-		double delta1 = closestPair(start, mid);
-		double delta2 = closestPair(mid + 1, end);
-		double delta = Math.min(delta1, delta2);
-		double closestSplitPair = closestSplitPair(start, mid, mid + 1, end,
-				delta);
-
-		return Math.min(delta, closestSplitPair);
-	}
-
-	// computes closest pair with one point in left half and one point in right
-	// half
-	// only considers points which are at most delta x units away
-	private static double closestSplitPair(int lStart, int lEnd, int rStart,
-			int rEnd, double delta) {
-		// last point of left array (lEnd) will be considered the middle by x
-		// point
-		Point middle = PX[lEnd];
-
-		// nearby array contains all points where x in the interval [x-d, x+d],
-		// sorted by y coordinate
-		ArrayList<Point> nearby = new ArrayList<Point>();
-		for (int i = 0; i < PY.length; i++) {
-			// make sure point is within lStart-lEnd or rStart-rEnd
-
-			Point p = PY[i];
-			if (p.x >= middle.x - delta && p.x <= middle.x + delta) {
-				nearby.add(p);
-			}
-		}
-
-		double min = delta;
-		// for each viable point
-		// compare it with the next 8 points in the array
-		// proven to solve closestSplitPair if shorter than delta by cool
-		// geometry
-		for (int i = 0; i < nearby.size() - 8; i++) {
-			for (int j = i; j < i + 8; j++) {
-				Point ip = nearby.get(i);
-				Point jp = nearby.get(j);
-				// compute distance between i and j
-				double dist = getDist(ip, jp);
-				if (dist < min) {
-					min = dist;
-					point1 = ip;
-					point2 = jp;
+					if (end == 1439) {
+						break;
+					}
 				}
 			}
+
+			// input has been taken in
+			// find shortest path from 0 to n-1
+			System.out.println(shortestPath(graph, 0, n - 1) - 720);
 		}
-		return min;
+
+		s.close();
 	}
 
-	// computes distance^2 between p1 and p2
-	// and assigns it as the best, if it is the best so far
-	private static double getDist(Point p1, Point p2) {
-		double dis = Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2);
-		return dis;
+	public static int shortestPath(Node[] graph, int start, int end) {
+		ArrayList<State> trials = new ArrayList<State>();
+		ArrayList<Integer> chargeTimes = new ArrayList<Integer>();
+		
+		State[] minDistance = new State[graph.length];
+		State[] maxBattery = new State[graph.length];
+	
+		Arrays.fill(minDistance, new State(Integer.MAX_VALUE, 0));
+		Arrays.fill(maxBattery, new State(Integer.MAX_VALUE, 0));
+
+		minDistance[start] = new State(720, 240); // noon
+		maxBattery[start] = new State(720, 240);
+
+		LinkedList<Integer> openList = new LinkedList<Integer>();
+		openList.add(start);
+
+		while (!openList.isEmpty()) {
+			int node = openList.pop();
+
+			if (node == end) {
+				continue;
+			}
+
+			//must be done twice, once for solution with best time, one with best battery
+			//unless they are the same
+			trials.clear();
+			
+			if(minDistance[node].equals(maxBattery[node])){
+				trials.add(minDistance[node]);
+			}else{
+				if(minDistance[node].time != Integer.MAX_VALUE){
+					trials.add(minDistance[node]);					
+				}
+				if(maxBattery[node].time != Integer.MAX_VALUE){
+					trials.add(maxBattery[node]);					
+				}
+			}
+			
+			for(int b = 0; b < trials.size(); b++){
+				int currentTime = trials.get(b).time;
+				int currentBatt = trials.get(b).battery;
+
+				// this could be made faster by calculating these values for each
+				// edge first,
+				// and then only adding the fastest one
+				for (int i = 0; i < graph[node].edges.size(); i++) {
+					Edge e = graph[node].edges.get(i);
+
+					// determine charge time
+					// how much we need to charge to traverse this edge, and get
+					// there with 0
+					int chargeTime = Math.max(0, e.distance - currentBatt) * 2;
+					
+
+					//this may be done twice
+					//if charge time is odd, then we wasted last minute trying to get higher battery
+					//since battery increases only every 2nd minute
+					//in some cases, it may be worth it to delay moving down edge, and charge extra
+					//minute to get that higher batter
+					//the first iteration is normal case
+					//second iteration is only done if 1st iteration chargeTime was odd
+					for(int ch = 0; ch < 2; ch++){
+						
+						//if 2nd iteration
+						if (ch == 1) {
+							if (chargeTime % 2 == 0) {
+								continue;
+							} else {
+								// try waiting one extra minute
+								chargeTime++;
+							}
+						}
+						
+						int timeAfterCharging = currentTime + chargeTime;
+						
+						//adjust time to within 0 - 1439
+						//and test when we can next take this edge
+						int adjustedTime = timeAfterCharging;
+						while (adjustedTime >= 1440) {
+							adjustedTime -= 1440;
+						}
+						
+						// determine wait time
+						int waitTime = 0;
+						if (e.endTime < adjustedTime) {
+							// must wait until edge is open tomorrow
+							waitTime = 1440 - (adjustedTime - e.startTime);
+						} else {
+							// edge can be done today
+							waitTime = Math.max(0, e.startTime - adjustedTime);
+						}
+						
+						int timeAfterChargeAndWait = timeAfterCharging + waitTime;
+
+						// might as well charge extra, as long as we are waiting
+						chargeTime += waitTime;
+						
+						// determine new battery charge
+						int newBatteryCharge = currentBatt + chargeTime / 2;
+						if (newBatteryCharge > 240) {
+							newBatteryCharge = 240;
+						}
+						
+						//traverse the edge
+						newBatteryCharge -= e.distance;
+
+						int totalTime = timeAfterChargeAndWait + e.distance;
+						// if we got there faster
+						if(totalTime < minDistance[e.to].time){
+							minDistance[e.to] = new State(totalTime, newBatteryCharge);
+							openList.add(e.to);
+						}
+						//or with more battery
+						else if (maxBattery[e.to].battery < newBatteryCharge) {
+							maxBattery[e.to] = new State(totalTime, newBatteryCharge);
+							openList.add(e.to);
+						}
+					}
+					chargeTimes.clear();
+				}
+			}
+
+		}
+
+		return minDistance[end].time;
 	}
 }
 
-class Point {
-	double x, y;
+class Node {
+	int val;
+	ArrayList<Edge> edges;
 
-	public Point(double xx, double yy) {
-		x = xx;
-		y = yy;
+	public Node(int v, ArrayList<Edge> e) {
+		val = v;
+		edges = e;
 	}
+}
+
+class Edge {
+	int from;
+	int to;
+	int startTime;
+	int endTime;
+	int distance;
+
+	public Edge(int f, int t, int s, int e, int d) {
+		from = f;
+		to = t;
+		startTime = s;
+		endTime = e;
+		distance = d;
+	}
+} class State {
+	int battery;
+	int time;
+	public State(int t, int b){
+		this.battery = b;
+		this.time = t;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		State o = (State)obj;
+		if(battery == o.battery){
+			if(time == o.time){
+				return true;
+			}
+		}
+		return false;
+	}
+	
 }

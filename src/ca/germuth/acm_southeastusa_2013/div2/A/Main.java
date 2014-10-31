@@ -4,13 +4,21 @@ import java.awt.geom.Line2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
-//TODO add explanation
-//basically, extend each line segment to be sure it could intersect circle,
-//then for each, line segment that intersects circle, add one section,
-//for each line segment which intersects another line, add one section. 
-//HOWEVER care must be taken that the point at which the line segments intersect
-//is within the circle, therefore after determing the line-circle intersect,
-//i shrink the lines to only have bounds within the circle
+
+/**
+ * Cut The Cake
+ * ACM ICPC SouthEast USA 2013 Regionals
+ * Division 2 Problem A
+ * 
+ * Basically, extend each line segment to be sure it could intersect the circle.
+ * Then for each line segment that intersects circle, add one to section count.
+ * For each line segment which intersects another line, add one to section count as well. 
+ * HOWEVER care must be taken that the point at which the line segments intersect must be
+ * within the circle, therefore after determining the line-circle intersect,
+ * i shrink the lines to only have bounds within the circle.
+ * 
+ * @author germuth
+ */
 public class Main {
 	static Point intersection1;
 	static Point intersection2;
