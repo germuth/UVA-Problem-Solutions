@@ -2,6 +2,7 @@ package ca.germuth.acm_southeastusa_2013.div2.C;
 
 import java.util.Scanner;
 
+//TODO add comments here
 class Main {
 	public static void main(String[] args) {
 		Scanner s = new Scanner(System.in);

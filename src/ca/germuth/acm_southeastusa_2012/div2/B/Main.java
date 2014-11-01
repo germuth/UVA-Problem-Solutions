@@ -1,17 +1,31 @@
 package ca.germuth.acm_southeastusa_2012.div2.B;
 
-/**
- * Collision Detection
- * ACM ICPC SouthEast USA 2012 Regionals
- * Division 2 Problem B
- * 
- * NOT YET SOLVED
- * Solving for exact solution is bad, use simulation.
- * NOT YET SOLVED
- * @author germuth
- */
 import java.util.Scanner;
 
+/**
+ * Collision Detection 
+ * ACM ICPC SouthEast USA 2012 Regionals 
+ * Problem B Division 2
+ * 
+ * This problem is quite finicky. The first observation is that the time limit
+ * is limited to 30 seconds from the end of the observations. This isn't very
+ * long, so rather than testing if they will ever intersect, and then limiting
+ * to 30 seconds etc, it is probably easier to just "simulate" the next 30
+ * seconds after the last observation, and see where the car is at that point.
+ * If the cars are ever 20 ft apart, you can report dangerous. The first
+ * question is how often do you check the position of the cars. Since cars can
+ * move at most 160 ft/sec (if both moving at 80 towards eachother) and you only
+ * need accuracy of 20ft, it takes 1/8th of a second at 160 to travel 20 ft.
+ * This is 0.125 seconds. So you can check for position of cars every 8th of a
+ * second. If you are worried you could check much more often than this though
+ * because it stil executes so quickly. Make sure you handle cars with 0
+ * acceleration, and 0 startSpeed or any combination of the bunch. Also the cars
+ * don't have to actually intersect, they could be running parallel to each
+ * other within 20 ft. Finally, only consider times from the last observation to
+ * 30 seconds in the future.
+ * 
+ * @author germuth
+ */
 class Main {
 	public static void main(String[] args) {
 		Scanner s = new Scanner(System.in);
@@ -41,88 +55,74 @@ class Main {
 			// create line segment for cars two points
 			// and extend line segment atleast length of entire grid (5000x5000)
 			// = 10000 distance
-			Line car1Path = extendLine(car1_point1, car1_point2, 10000);
-			Line car2Path = extendLine(car2_point1, car2_point2, 10000);
+			// Line car1Path = extendLine(car1_point1, car1_point2, 10000);
+			// Line car2Path = extendLine(car2_point1, car2_point2, 10000);
 
-			// test for intersection
-			Point intersection = getIntersectionPoint(car1Path, car2Path);
-			if (intersection != null) {
-				// find distance between two points
-				double car1_point1_to_point2 = dist(car1_point1, car1_point2);
-				double car2_point1_to_point2 = dist(car2_point1, car2_point2);
-				// find accelerations using two points
-				// Vf^2 = Vi^2 + 2ad
-				// a = (Vf^2-Vi^2)/2d
-				double car1_accel = (car1_speed2 * car1_speed2 - car1_speed1
-						* car1_speed1)
-						/ (2.0 * car1_point1_to_point2);
-				double car2_accel = (car2_speed2 * car2_speed2 - car2_speed1
-						* car2_speed1)
-						/ (2.0 * car2_point1_to_point2);
+			// THEY DON't HAVE TO INTERSECT
+			// Point intersection = getIntersectionPoint(car1Path, car2Path);
+			// if(intersection != null){
+			// find distance between two points
+			double car1_point1_to_point2 = dist(car1_point1, car1_point2);
+			double car2_point1_to_point2 = dist(car2_point1, car2_point2);
 
-				// calculate distance from point 1 to intersection
-				double car1_dist = dist(car1_point1, intersection);
-				double car2_dist = dist(car2_point1, intersection);
+			// find accelerations using two points
+			// Vf^2 = Vi^2 + 2ad
+			// a = (Vf^2-Vi^2)/2d
+			double car1_accel = (car1_speed2 * car1_speed2 - car1_speed1
+					* car1_speed1)
+					/ (2.0 * car1_point1_to_point2);
+			if (car1_point1_to_point2 == 0) {
+				car1_accel = 0;
+			}
+			double car2_accel = (car2_speed2 * car2_speed2 - car2_speed1
+					* car2_speed1)
+					/ (2.0 * car2_point1_to_point2);
+			if (car2_point1_to_point2 == 0) {
+				car2_accel = 0;
+			}
 
-				// make sure both cars will reach the intersection (if accel
-				// negative, they might stop)
-				if (willReach(car1_dist - 20, car1_accel, car1_speed1)
-						&& willReach(car2_dist - 20, car2_accel, car2_speed1)) {
-					// okay now we are sure both cars will make it to the
-					// intersection at somepoint
-					// but will they make it there (or atleast within 20ft) in
-					// 30 seconds
-					if (willReachIn(car1_dist - 20, car1_accel, car1_speed1, 30)
-							&& willReachIn(car2_dist - 20, car2_accel,
-									car2_speed1, 30)) {
+			if (car1_accel == 0 && car2_accel == 0 && car1_speed1 == 0
+					&& car2_speed1 == 0) {
+				// cars not moving
+				dangerous = (dist(car1_point1, car2_point1) <= 19.0);
+			}
 
-						// calculate at what time they will make it there
-						// (arrival Time)
-						double car1_arrival = arrivalTime(car1_speed1,
-								car1_accel, car1_dist);
-						car1_arrival += car1_time1;
-						double car2_arrival = arrivalTime(car2_speed1,
-								car2_accel, car2_dist);
-						car2_arrival += car2_time1;
+			// simulate cars moving
+			// going at 160 ft / sec (max speed of both cars driving at
+			// eachother) can only move 40 ft / 0.25 seconds, or 20ft / 0.125
+			// seconds
+			// this means we much check atleast every 0.125 seconds
+			// ill check every 0.01 to be safe
+			double time = Math.max(car1_time2, car2_time2);
+			for (double t = time; t <= time + 30.0; t += 0.125) {
 
-						// how far did other car make it when car was at
-						// intersection
-						// d = at^2 /2 + Vi*t
-						double car2_dist_at_car1_arrival = car2_accel
-								* car1_arrival * car1_arrival / 2.0
-								+ car2_speed1 * car1_arrival;
-						double car1_dist_at_car2_arrival = car1_accel
-								* car2_arrival * car2_arrival / 2.0
-								+ car1_speed1 * car2_arrival;
+				// find position of car 1
+				double car1_dist = getDistanceAtTime(car1_speed2, car1_accel, t
+						- car1_time2);
+				// map this distance travelled to x y coordinates
+				// line for car is already x long, where x is distance between
+				// car1 point 1 and car1 point 2
+				// we need to extend/shrink this line to be car1_dist long
+				// 2nd point will then be where car1 located at car2 arrival
+				Line car1_temp_line = extendLine(car1_point1, car1_point2,
+						car1_dist);
+				Point car1_pos = car1_temp_line.b;
 
-						// map this distance travelled to coordinate of other
-						// car
-						// line for car is aleady x long, where x is distance
-						// between car1 point 1 and car1 point 2
-						// we need to extend/shrink this line to be
-						// car1_dist_at_car2_arrival long
-						// 2nd point will then be where car1 located at car2
-						// arrival
-						Line car1_temp_line = extendLine(car1_point1,
-								car1_point2, car1_dist_at_car2_arrival
-										- car1_point1_to_point2);
-						Point car1_pos_when_car2_at_intersection = car1_temp_line.b;
+				// find position of car 1
+				double car2_dist = getDistanceAtTime(car2_speed2, car2_accel, t
+						- car2_time2);
+				Line car2_temp_line = extendLine(car2_point1, car2_point2,
+						car2_dist);
+				Point car2_pos = car2_temp_line.b;
 
-						Line car2_temp_line = extendLine(car2_point1,
-								car2_point2, car2_dist_at_car1_arrival
-										- car2_point1_to_point2);
-						Point car2_pos_when_car1_at_intersection = car2_temp_line.b;
-
-						if (dist(car1_pos_when_car2_at_intersection,
-								intersection) <= 18.0) {
-							dangerous = true;
-						} else if (dist(car2_pos_when_car1_at_intersection,
-								intersection) <= 18.0) {
-							dangerous = true;
-						}
-					}
+				// check how close they are
+				double distanceBetween = dist(car1_pos, car2_pos);
+				if (distanceBetween < 19.0) {
+					dangerous = true;
+					break;
 				}
 			}
+			// }
 
 			if (dangerous) {
 				System.out.println("Dangerous");
@@ -133,92 +133,49 @@ class Main {
 		s.close();
 	}
 
-	public static double arrivalTime(double startSpeed, double acceleration,
-			double distance) {
-		// must first calculate velocity at intersection (Vf)
-		// Vf^2 = Vi^2 + 2ad
-		double finalSpeed = startSpeed * startSpeed + 2.0 * acceleration
-				* distance;
-		if (finalSpeed < 0) {
-			finalSpeed = 0;
+	public static double getDistanceAtTime(double startSpeed,
+			double acceleration, double time) {
+		if (time <= 0) {
+			return 0;
 		}
-		finalSpeed = Math.sqrt(finalSpeed);
 
-		double arrivalTime = 0;
-		// if either final speed is greater than 80 than they won't actually
-		// continue to accelerate past 80
+		// first find velocity at time
+		// Vf = Vi + at
+		double finalSpeed = startSpeed + acceleration * time;
 		if (finalSpeed > 80.0) {
 			// how far does it go until reaches top speed
 			// Vf^2 = Vi^2 + 2ad
 			// d = (Vf^2-Vi^2) / 2a
 			// d = (80^2 - Vi^2) /2a
-			double dist_after_accel = (80.0 * 80.0 - startSpeed * startSpeed)
+			double dist_while_accel = (80.0 * 80.0 - startSpeed * startSpeed)
 					/ (2.0 * acceleration);
-			double distanceRemaining = distance - dist_after_accel;
-
 			// time it took to reach 80
 			// Vf = Vi + at
 			// t = (Vf-Vi)/a
 			// t = (80-Vi)/a
 			double time_to_accel = (80.0 - startSpeed) / acceleration;
 
-			// remaining time it takes to get to intersection
-			// now at constant velocity
 			// V = d / t
-			// t = d / V
-			arrivalTime = distanceRemaining / 80.0;
-			arrivalTime += time_to_accel;
-			return arrivalTime;
-		} else {
-			// we don't reach 80 until after intersection
-			// so acceleration is constant entire time
-			// Vf = Vi + at
-			// t = (Vf-Vi)/a
-			// t = (80-Vi)/a
-			double time_to_accel = (finalSpeed - startSpeed) / acceleration;
-			return time_to_accel;
-		}
-	}
-
-	public static boolean willReachIn(double totalDistance,
-			double acceleration, double startSpeed, double timeLimit) {
-		// calculate how far we will make it in the time limit
-		// and whether that distance is greater or equal to total distance
-		// calculate final velocity first
-		// Vf = Vi + at
-		double finalSpeed = startSpeed + acceleration * timeLimit;
-		if (finalSpeed < 0) {
-			finalSpeed = 0;
-		}
-		// calculate how far we make it
-		// Vf^2 = Vi^2 + 2ad
-		// d = (Vf^2-Vi^2) / 2a
-		double distanceReached = (finalSpeed * finalSpeed - startSpeed
-				* startSpeed)
-				/ (2.0 * acceleration);
-		if (distanceReached >= totalDistance) {
-			return true;
-		}
-		return false;
-
-	}
-
-	public static boolean willReach(double totalDistance, double acceleration,
-			double startSpeed) {
-		if (acceleration < 0) {
-			// set Vf to 0, and see how long they will make
+			// d = V*t
+			double dist_after_accel = (80.0 * (time - time_to_accel));
+			return dist_while_accel + dist_after_accel;
+		} else if (finalSpeed <= 0.0) {
+			// how far does it go until reaches 0
 			// Vf^2 = Vi^2 + 2ad
-			// d = (Vf^2-Vi^2)/2a
-			// d = -Vi^2/2a
-			double distanceBeforeStop = -(startSpeed * startSpeed)
+			// d = (Vf^2-Vi^2) / 2a
+			// d = -Vi^2 /2a
+			double dist_while_accel = -(startSpeed * startSpeed)
 					/ (2.0 * acceleration);
-
-			if (distanceBeforeStop >= totalDistance) {
-				return true;
-			}
-			return false;
+			return dist_while_accel;
+		} else if (acceleration == 0) {
+			// V = d / t
+			// d = V*t
+			return startSpeed * time;
+		} else {
+			// find distance travelled
+			return (finalSpeed * finalSpeed - startSpeed * startSpeed)
+					/ (2.0 * acceleration);
 		}
-		return true;
 	}
 
 	public static Point getIntersectionPoint(Line line, Line line2) {

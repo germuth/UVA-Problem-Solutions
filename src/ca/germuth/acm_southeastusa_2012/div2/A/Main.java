@@ -7,6 +7,8 @@ import java.util.Scanner;
  * ACM ICPC SouthEast USA 2012 Regionals
  * Division 2 Problem A
  * 
+ * Pretty sure this is correct but I can't find the judge i used
+ * 
  * This can be solved using one dimensional dynamic programming.
  * Start at money = 0, and solve for the best candy configuration, then
  * slowly increment money until you equal the input amount.
