@@ -2,7 +2,18 @@ package ca.germuth.acm_southeastusa_2013.div2.C;
 
 import java.util.Scanner;
 
-//TODO add comments here
+/**
+ * Ping!
+ * ACM ICPC SouthEast USA 2013 Regionals
+ * Problem C Division 2
+ * 
+ * All of the satellites have unique ping times, and they all start at 0. Therefore the
+ * first 1 you see must represent the first satellite. After finding a satellite, you can
+ * proceed through a string and "reverse" its mark, by setting all 0s to 1s and vice versa. 
+ * This will erase this satellites pings, and then the first 1 you see again is the next satellite. 
+ * Proceeding this way, you can find all satellites from fastest to slowest pinging.
+ * @author Aaron
+ */
 class Main {
 	public static void main(String[] args) {
 		Scanner s = new Scanner(System.in);
@@ -11,15 +22,6 @@ class Main {
 			if (in.trim().equals("0")) {
 				break;
 			}
-
-			// comment taken from solution:
-
-			// All of the satellites have unique ping times, and they all start
-			// at 0.
-			// So, skipping time 0, if the earliest ping you see is at time k,
-			// then there has to be a satellite pinging at k. Furthermore, that
-			// has
-			// to be the fastest pinging satellite.
 
 			String answer = "";
 			char[] pings = in.toCharArray();

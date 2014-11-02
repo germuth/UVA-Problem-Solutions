@@ -4,27 +4,23 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * Dueling Philospohers 
+ * Dueling Philosophers 
  * ACM ICPC SouthEast USA 2012 Regionals
  * Problem D Division 2
  * 
- * TODO: REDO WITH O(n) TOPO SORT, AND PUT IN DRIVE DOC
- * 
- * Done with topological sort.
- * Need to redo this one with proper O(n) topological sort
- * then add to graph algorithms
+ * This problem represents nodes (essay) depending on other nodes (essays). Any cycle in the graph
+ * means there is no solution, and whenever there are two choices for the next node, there are
+ * multiple solutions. 
+ * This can be done with topological sort, grabbing all nodes with degree 0 one at a time.
  * 
  * @author germuth
  */
 
 class Main {
-	static boolean multiple = false;
-
 	public static void main(String[] args) {
 		Scanner s = new Scanner(System.in);
 
 		while (true) {
-			multiple = false;
 			int n = s.nextInt();
 			int m = s.nextInt();
 
@@ -44,66 +40,48 @@ class Main {
 				graph[from].neighbours.add(graph[to]);
 				graph[to].indegree++;
 			}
-
-			int nodesFound = 0;
-			int result = getNodeWithInDegree0(graph);
-			while (result != -2) {
-				nodesFound++;
-				result = getNodeWithInDegree0(graph);
+			
+			//find all nodes with degree 0
+			ArrayList<Node> degree0 = new ArrayList<Node>();
+			for(Node no: graph){
+				if(no.indegree == 0){
+					degree0.add(no);
+				}
 			}
-
-			if (nodesFound == n && multiple) {
-				System.out.println("2");
-			} else if (nodesFound == n) {
-				System.out.println("1");
-			} else {
+			
+			boolean multipleOptions = false;
+			int nodesFound = 0;
+			while(!degree0.isEmpty()){
+				if(degree0.size() > 1){
+					multipleOptions = true;
+				}
+				//grab node with degree 0 and remove from list
+				Node removing = degree0.get(degree0.size() - 1);
+				degree0.remove(degree0.size() - 1);
+				nodesFound++;
+				
+				//decrement indegrees of all neighbours
+				for(Node neighbour: removing.neighbours){
+					neighbour.indegree--;
+					if(neighbour.indegree == 0){
+						degree0.add(neighbour);
+					}
+				}
+			}
+			
+			if(nodesFound == n){
+				if(multipleOptions){
+					System.out.println("2");
+				}else{
+					System.out.println("1");
+				}
+			}else{
 				System.out.println("0");
 			}
-			// if(nodesFound == n){
-			// System.out.println("1");
-			// }else if(result == -2){
-			// System.out.println("0");
-			// }else if(multiple){
-			// System.out.println("2");
-			// }else{
-			// System.out.println("0");
-			// }
 		}
 
 		s.close();
 	}
-
-	// if 0 -> n then we found one node at that index
-	// if -1, then we found multiple
-	// if -2, then we found none
-	public static int getNodeWithInDegree0(Node[] graph) {
-		int foundAt = -5;
-		for (int i = 0; i < graph.length; i++) {
-			if (!graph[i].useable) {
-				continue;
-			}
-			if (graph[i].indegree == 0) {
-				// we found multiple!
-				if (foundAt != -5) {
-					multiple = true;
-					break;
-				}
-				foundAt = i;
-			}
-		}
-
-		if (foundAt != -5) {
-			// first one we found
-			// mark as not used and remove his edges
-			graph[foundAt].useable = false;
-			for (Node n : graph[foundAt].neighbours) {
-				n.indegree--;
-			}
-			return foundAt;
-		}
-		return -2;
-	}
-
 }
 
 class Node {

@@ -1,7 +1,5 @@
 package ca.germuth.acm_pacnw_2013.test;
 
-package ca.germuth.acm_southeastusa_2013.div2.D;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,17 +11,6 @@ import java.util.Scanner;
  * ACM ICPC SouthEast USA Regionals 2013
  * Problem D Division 2
  * 
- * NOT YET ACCEPTED, BUT SHOULD BE CLOSE
- * This problem boils down to a really complex single source-single destination shortest path.
- * So it can be solved with simple BFS. 
- * After running through the test examples, you can see that there are some cases
- * where getting to a node slower, but with more battery is advantageous. Therefore at each node,
- * you consider traversing all edges, and if you got somewhere faster, or with more battery than you remember
- * that state, and will build off of it later. Additionally, if your charging time is an odd number and you leave,
- * you have wasted that last minute charging since you only increase battery every 2 minutes. Therefore in these 
- * cases, you must also consider the possibility that you waited the extra minute as well.
- * 
- * @author Aaron
  */
 class Main {
 	static HashMap<Integer, ArrayList<Edge>> edges;
