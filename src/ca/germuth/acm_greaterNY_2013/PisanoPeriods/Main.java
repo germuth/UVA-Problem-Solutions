@@ -10,6 +10,7 @@ import java.util.Scanner;
  * Problem D
  * 
  * TODO add explanation 
+ * and solve yourself
  */
 class Main {
         public static void main(String[] args){
