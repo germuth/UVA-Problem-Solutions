@@ -12,8 +12,7 @@ import java.util.Scanner;
  * 
  * Key observation here is that there are n nodes, and n-1 edges, and the graph is connected. 
  * this means it is impossible for graph to have a cycle, which means the only way to reach x nodes,
- * and return where you got is to travel the edge once each way. i think you can double the weight 
- * on each edge and BFS until you find n-k edges.
+ * and return where you got is to travel the edge once each way.
 
  * @author Germuth
  */
